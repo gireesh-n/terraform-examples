@@ -1,0 +1,45 @@
+Step 1: Create a provider.tf file with below content.
+
+provider "aws" {
+        region="ap-south-1"
+}
+Step 2: Create a securtiy.tf file with below content.
+
+resource "aws_security_group" "web-security" {
+        name="webserver-securitygroup"
+        ingress {
+                from_port=8080
+                to_port=8080
+                protocol="tcp"
+                cidr_blocks=["0.0.0.0/0"]
+        }
+}
+Step 3: Create a instance.tf file with below content.
+
+resource "aws_instance" "Demo" {
+        ami="ami-03b8a287edc0c1253"
+        instance_type="t2.micro"
+        vpc_security_group_ids=[aws_security_group.web-security.id]
+        user_data=<<-EOF
+                #!/bin/bash
+                echo "You are learning Terraform, Have a good day" > index.html
+                nohup busybox httpd -f -p 8080 &
+                EOF
+        tags={
+                Name="Demo-SimpleWebServer"
+        }
+}
+
+Step 4: Create a output.tf file with below content.
+
+output "webserver-public-ip" {
+        value=aws_instance.Demo.public_ip
+}
+Step 5: Deploy the infra using terraform init and terraform apply command.
+
+terraform init
+terraform apply
+Step 6: Check the response of the web server using curl command and the instance public IP address.
+
+curl http://<instance-publi-ip>:8080
+ 
