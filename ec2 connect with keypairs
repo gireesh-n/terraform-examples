@@ -1,0 +1,42 @@
+Step 1: Create a provider.tf file with below content.
+
+provider "aws" {
+    region = "ap-south-1"
+}
+Step 2: Create a instance.tf file with below content.
+
+resource "aws_instance" "demo" {
+    ami = "ami-03b8a287edc0c1253"
+    instance_type = "t2.micro"
+    key_name = "myfirstkey"
+    tags = {
+         name = "demo5"
+    }
+}
+Step 3: Create a key.tf file with below content.
+
+resource "aws_key_pair" "myfirstkey" {
+  key_name   = "myfirstkey"
+  public_key = file(var.PATH_TO_PUBLIC_KEY)
+}
+Step 4: Create a variable.tf file withe below content.
+
+variable "PATH_TO_PRIVATE_KEY" {
+  default = "myfirstkey"
+}
+variable "PATH_TO_PUBLIC_KEY" {
+  default = "myfirstkey.pub"
+}
+Step 5: Generate a key pair.
+
+ssh-keygen –f myfirstkey
+Step 6: Observer the created private and public key pair with names myfirstkey and myfirstkey.pub
+
+Step 7: Execute terraform init followed by terraform apply to deploy the EC2 instance.
+
+terraform init
+terraform apply
+Step 8: Connect to the deployed EC2 instance using the private key.
+
+ssh -i myfirstkey ubuntu@<public-IP of the launched instance>
+ 
