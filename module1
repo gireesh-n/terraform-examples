@@ -1,0 +1,44 @@
+Create a (main.tf) in location ~/terraform-demos/modules/ec2-instance.
+
+Edit the main.tf file with below content.
+
+provider "aws" {
+    region = var.AWS_REGION
+}
+resource "aws_instance" "module-demo" {
+    ami = var.AWS_AMI
+    instance_type = "t2.micro"
+}
+variable "AWS_REGION" {
+}
+variable "AWS_AMI" {
+}
+If you look at the content of main.tf, you will observe that it is meant to launch an ec2 instance based upon the inputs such as AWS region, AWS AMI.
+
+Now if we want to launch an another ec2 instance but we don’t want to write the code again, can we use existing code inside main.tf. Yes, we can use it, Here is the syntax for using a module: -
+
+Module “<NAME”> {
+
+          source = “<SOURCE>”
+
+          [CONFIG]
+
+}
+
+Here, CONFIG consist of one or more argument that are specified to that module
+
+Now let us create a directory demo4 and use the module to launch the instance. Create an instance.tf file with below content inside demo4 directory.
+
+module "ec2-instance"{
+  source = "~/terraform-demos/modules/ec2-instance"
+  AWS_REGION = "ap-south-1"
+  AWS_AMI = "ami-03b8a287edc0c1253"
+}
+
+Change the working directory to demo4 and execute the command terraform init
+
+terraform init
+Execute terraform apply followed by a confirmation("yes") to launch the instance using existing code.
+
+terraform apply
+ 
