@@ -1,0 +1,13 @@
+We have launched several EC2 instances by now, Did a thought of connecting to the instance cross your mind, if yes, the question arises, How?
+
+We can create key pairs and register it in AWS and use this key to connect to an EC2 instance.
+
+One can even use an existing key in AWS, to connect to the instance.
+
+Below is the resource configuration, using which on can register the public key in AWS.
+
+resource "aws_key_pair" "myfirstkey" {
+      key_name   = "myfirstkey"
+      public_key = file(var.PATH_TO_PUBLIC_KEY)
+}
+Let us create our first key pair and register the public key in AWS and then use the private key to connect to an EC2 instance.
