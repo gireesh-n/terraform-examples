@@ -1,0 +1,49 @@
+Step 1: Create a provider.tf file with below code snippet.
+
+provider "aws" {
+        region = var.AWS_REGION
+}
+ 
+
+Step 2: Create a resource.tf file with below code snippet.
+
+resource "aws_instance" "output_demo" {
+    ami = lookup(var.AMIS,var.AWS_REGION)
+    instance_type = "t2.micro"
+}
+
+Step 3: Create a vars.tf file with below code snippet.
+
+variable "AWS_ACCESS_KEY" {}
+variable "AWS_SECRET_KEY" {}
+variable "AWS_REGION" {
+        type = string
+        default = "ap-south-1"
+}
+variable "AMIS" {
+        type = map
+        default = {
+        ap-south-1 = "ami-03b8a287edc0c1253"
+        }
+}
+Step 4: Create a terraform.tfvars with below code snippet.
+
+AWS_REGION="ap-south-1"
+Step 5: Create a output.tf file with below code snippet.
+
+output "instance-public-ip" {
+        value=aws_instance.output_demo.public_ip
+}
+Step 6: Execute terraform init
+
+terraform init
+Step 7: Execute terraform validate
+
+terraform validate
+Step 8: Execute terraform plan
+
+terraform plan
+Step 9: Execute terraform apply
+
+terraform apply
+Step 10: Observe the public ip of the deployed instance being displayed on the console.
