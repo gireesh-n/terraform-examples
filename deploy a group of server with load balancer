@@ -1,0 +1,130 @@
+Step 1: Create a provider.tf file with below content.
+
+provider "aws" {
+  region = "ap-south-1"
+}
+Step 2: Create a securitygroup-alb.tf file with below content.
+
+resource "aws_security_group" "alb" {
+  name = "webservre-securitygroup-alb"
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+Step 3: Create a security.tf file with below content.
+
+resource "aws_security_group" "web-security" {
+  name = "webserver-securitygroup"
+  ingress {
+    from_port   = 8080
+    to_port     = 8080
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+Step 4: Create a launch-configuration.tf file with below content.
+
+resource "aws_launch_configuration" "demo" {
+  image_id        = "ami-03b8a287edc0c1253"
+  instance_type   = "t2.micro"
+  security_groups = [aws_security_group.web-security.id]
+  user_data = <<-EOF
+              #!/bin/bash
+              echo "You are learning Terraform, Have a good day" > index.html
+              nohup busybox httpd -f -p 8080 &
+              EOF
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+Step 5: Create a autoscaling-group.tf file with below content.
+
+resource "aws_autoscaling_group" "demo" {
+  launch_configuration = aws_launch_configuration.demo.name
+  vpc_zone_identifier  = data.aws_subnet_ids.default.ids
+  target_group_arns = [aws_lb_target_group.asg.arn]
+  health_check_type = "ELB"
+  min_size = 2
+  max_size = 10
+  tag {
+    key                 = "demo"
+    value               = "webserver-with-asg-lb"
+    propagate_at_launch = true
+  }
+}
+data "aws_vpc" "default" {
+  default = true
+}
+data "aws_subnet_ids" "default" {
+  vpc_id = data.aws_vpc.default.id
+}
+Step 6: Create a load-balancer.tf file with below content.
+
+resource "aws_lb" "demo" {
+  name               = "demo-alb"
+  load_balancer_type = "application"
+  subnets            = data.aws_subnet_ids.default.ids
+  security_groups    = [aws_security_group.alb.id]
+}
+resource "aws_lb_listener" "http" {
+  load_balancer_arn = aws_lb.demo.arn
+  port              = 80
+  protocol          = "HTTP"
+  default_action {
+    type = "fixed-response"
+    fixed_response {
+      content_type = "text/plain"
+      message_body = "404: page not found"
+      status_code  = 404
+    }
+  }
+}
+resource "aws_lb_target_group" "asg" {
+  name = "demo-tg"
+  port     = 8080
+  protocol = "HTTP"
+  vpc_id   = data.aws_vpc.default.id
+  health_check {
+    path                = "/"
+    protocol            = "HTTP"
+    matcher             = "200"
+    interval            = 15
+    timeout             = 3
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+  }
+}
+resource "aws_lb_listener_rule" "asg" {
+  listener_arn = aws_lb_listener.http.arn
+  priority     = 100
+  condition {
+    path_pattern {
+      values = ["*"]
+    }
+  }
+  action {
+   type            ="forward"
+   target_group_arn=aws_lb_target_group.asg.arn
+  }
+}
+Step 7: Create a output.tf with below content.
+
+output "load-balancer-dns-name" {
+  value = aws_lb.demo.dns_name
+  description = "FQDN of alb"
+}
+
+Step 8: Deploy the infrastructure using terraform init and terraform apply command.
+
+terraform init
+terraform apply
+ 
